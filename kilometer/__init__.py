@@ -41,20 +41,25 @@ class EventsAPIClient(object):
         self._endpoint_url = endpoint_url or "https://events.kilometer.io"
         self._request_timeout = request_timeout
 
-    def add_user(self, user_id, headers=None, endpoint_url=None):
+    def add_user(self, user_id, custom_properties=None, headers=None, endpoint_url=None):
         """
         Creates a new identified user if he doesn't exist.
 
         :param str user_id: identified user's ID
+        :param dict custom_properties: user properties
         :param dict headers: custom request headers (if isn't set default values are used)
-        :param dict endpoint_url: where to send the request (if isn't set default value is used)
+        :param str endpoint_url: where to send the request (if isn't set default value is used)
         :return: Response
         """
         endpoint_url = endpoint_url or self._endpoint_url
 
         url = endpoint_url + '/users'
+
         headers = headers or self._default_headers()
         payload = {"user_id": user_id}
+
+        if custom_properties is not None:
+            payload["user_properties"] = custom_properties
 
         response = requests.post(url, headers=headers, json=payload)
 
@@ -68,20 +73,18 @@ class EventsAPIClient(object):
         :param str event_name: event name (e.g. "visit_website")
         :param dict event_properties: properties that describe the event's details
         :param dict headers: custom request headers (if isn't set default values are used)
-        :param dict endpoint_url: where to send the request (if isn't set default value is used)
+        :param str endpoint_url: where to send the request (if isn't set default value is used)
         :return: Response
         """
         endpoint_url = endpoint_url or self._endpoint_url
 
-        url = endpoint_url + '/events'
+        url = endpoint_url + '/users/' + user_id + '/events'
         headers = headers or self._default_headers()
 
         event_properties = event_properties or {}
         payload = {
-            "user_id": user_id,
             "event_name": event_name,
-            "event_type": "identified",
-            "event_properties": event_properties
+            "custom_properties": event_properties
         }
 
         response = requests.post(url, headers=headers, json=payload)
@@ -96,13 +99,13 @@ class EventsAPIClient(object):
         :param str property_name: user property name to increase
         :param number value: amount by which to increase the property
         :param dict headers: custom request headers (if isn't set default values are used)
-        :param dict endpoint_url: where to send the request (if isn't set default value is used)
+        :param str endpoint_url: where to send the request (if isn't set default value is used)
         :return: Response
         """
         endpoint_url = endpoint_url or self._endpoint_url
 
         url = endpoint_url + "/users/" + user_id + "/properties/" + property_name + "/increase/" + value.__str__()
-        headers = headers or self._default_headers(content_type=None)
+        headers = headers or self._default_headers(content_type='')
 
         response = requests.post(url, headers=headers)
 
@@ -116,13 +119,13 @@ class EventsAPIClient(object):
         :param str property_name: user property name to increase
         :param number value: amount by which to decrease the property
         :param dict headers: custom request headers (if isn't set default values are used)
-        :param dict endpoint_url: where to send the request (if isn't set default value is used)
+        :param str endpoint_url: where to send the request (if isn't set default value is used)
         :return: Response
         """
         endpoint_url = endpoint_url or self._endpoint_url
 
         url = endpoint_url + "/users/" + user_id + "/properties/" + property_name + "/decrease/" + value.__str__()
-        headers = headers or self._default_headers(content_type=None)
+        headers = headers or self._default_headers(content_type="")
 
         response = requests.post(url, headers=headers)
 
@@ -130,12 +133,12 @@ class EventsAPIClient(object):
 
     def update_user_properties(self, user_id, user_properties, headers=None, endpoint_url=None):
         """
-        Update a user's properties with values porovided in "user_properties" dictionary
+        Update a user's properties with values provided in "user_properties" dictionary
 
         :param str user_id: identified user's ID
         :param dict user_properties: user properties to update with a new values
         :param dict headers: custom request headers (if isn't set default values are used)
-        :param dict endpoint_url: where to send the request (if isn't set default value is used)
+        :param str endpoint_url: where to send the request (if isn't set default value is used)
         :return: Response
         """
         endpoint_url = endpoint_url or self._endpoint_url
@@ -148,20 +151,59 @@ class EventsAPIClient(object):
 
         return response
 
+    def link_user_to_group(self, user_id, group_id, headers=None, endpoint_url=None):
+        """
+        Links a user to a group
+
+        :param str user_id: identified user's ID
+        :param str group_id: group ID
+        :param dict headers: custom request headers (if isn't set default values are used)
+        :param str endpoint_url: where to send the request (if isn't set default value is used)
+        :return: Response
+        """
+        endpoint_url = endpoint_url or self._endpoint_url
+
+        url = endpoint_url + '/groups/' + group_id + '/link/' + user_id
+        headers = headers or self._default_headers()
+
+        response = requests.post(url, headers=headers)
+
+        return response
+
+    def update_group_properties(self, group_id, group_properties, headers=None, endpoint_url=None):
+        """
+        Update a group's properties with values provided in "group_properties" dictionary
+
+        :param str group_id: group ID
+        :param dict group_properties: group properties to update with a new values
+        :param dict headers: custom request headers (if isn't set default values are used)
+        :param str endpoint_url: where to send the request (if isn't set default value is used)
+        :return: Response
+        """
+        endpoint_url = endpoint_url or self._endpoint_url
+
+        url = endpoint_url + '/groups/' + group_id + '/properties'
+        headers = headers or self._default_headers()
+        payload = group_properties
+
+        response = requests.put(url, headers=headers, json=payload)
+
+        return response
+
     def _default_headers(self, content_type=CONTENT_TYPE, token=None):
         """
         Get default headers for API request
-        :param str content_type: HTTP request content type
+        :param unicode content_type: HTTP request content type
         :param: str token: customer app ID
         :return: dictionary
         """
         headers = {
             self.HEADER_CLIENT_TYPE: self.CLIENT_TYPE,
-            self.HEADER_TIMESTAMP: self._now(),
+            self.HEADER_TIMESTAMP: str(self._now()),
             self.HEADER_CUSTOMER_APP_ID: token or self._token
         }
 
-        if content_type is not None:
+        if content_type is not None or content_type is not False:
             headers[self.HEADER_CONTENT_TYPE] = content_type
 
         return headers

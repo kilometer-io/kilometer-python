@@ -4,7 +4,7 @@ LONG_DESCRIPTION = "The official Kilometer.io library for python"
 
 setup(
     name='kilometer',
-    version='0.8.2',
+    version='1.0.1',
     description='The official Kilometer.io library for Python',
     long_description=LONG_DESCRIPTION,
     url='https://github.com/kilometer-io/kilometer-python',
