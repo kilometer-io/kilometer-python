@@ -24,7 +24,7 @@ import kilometer
 kilometer = kilometer.EventsAPIClient('<<<APP_ID>>>')
 
 # Transmit an event with certain properties
-kilometer.add_event("<<<USER-ID>>>", "user_signup")
+kilometer.add_event("<<<USER-ID>>>", "user_billed", {"amount": 100.00})
 
 # Update a user's properties
 kilometer.update_user_properties("<<<USER-ID>>>", {"status": "active", "name": "<<<JOHN WHITE>>>"})
